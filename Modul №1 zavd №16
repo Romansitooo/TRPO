@@ -1,0 +1,80 @@
+using System;
+
+// Клас для збору відомостей про подію
+public class StudentEventArgs : EventArgs
+{
+    public int OldCount { get; }
+    public int NewCount { get; }
+
+    public StudentEventArgs(int oldCount, int newCount)
+    {
+        OldCount = oldCount;
+        NewCount = newCount;
+    }
+}
+
+// Клас Group з подією та логікою зміни кількості студентів
+public class Group
+{
+    private int studentCount;
+    public event EventHandler<StudentEventArgs> StudentCountChanged;
+
+    public int StudentCount
+    {
+        get { return studentCount; }
+        set
+        {
+            int oldCount = studentCount;
+            studentCount = value;
+            OnStudentCountChanged(oldCount, studentCount);
+        }
+    }
+
+    protected virtual void OnStudentCountChanged(int oldCount, int newCount)
+    {
+        EventHandler<StudentEventArgs> handler = StudentCountChanged;
+        if (handler != null)
+        {
+            StudentEventArgs eventArgs = new StudentEventArgs(oldCount, newCount);
+            handler(this, eventArgs);
+        }
+    }
+}
+
+// Клас-обробник події для моніторингу змін в групі
+public class StudentMonitor
+{
+    public StudentMonitor(Group group)
+    {
+        group.StudentCountChanged += Group_StudentCountChanged;
+    }
+
+    private void Group_StudentCountChanged(object sender, StudentEventArgs e)
+    {
+        if (e.NewCount > e.OldCount)
+        {
+            Console.WriteLine($"Кількість студентів збільшилася з {e.OldCount} на {e.NewCount}");
+        }
+        else if (e.NewCount < e.OldCount)
+        {
+            Console.WriteLine($"Кількість студентів зменшилася з {e.OldCount} на {e.NewCount}");
+        }
+        else
+        {
+            Console.WriteLine("Кількість студентів залишилася незмінною.");
+        }
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        Group group = new Group();
+        StudentMonitor monitor = new StudentMonitor(group);
+
+        group.StudentCount = 20;
+        group.StudentCount = 25;
+        group.StudentCount = 15;
+    }
+}
